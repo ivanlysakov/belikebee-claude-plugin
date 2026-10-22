@@ -1,0 +1,17 @@
+{
+  "name": "belikebee-plugins",
+  "owner": {
+    "name": "ivan lysakov"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for the BeLikeBee project."
+  },
+  "plugins": [
+    {
+      "name": "belikebee",
+      "description": "BeLikeBee feature workflow: plan, scaffold, test and ship skills, a pattern-scout subagent, and a hook that blocks module-boundary violations.",
+      "version": "0.1.0",
+      "source": "./plugins/belikebee"
+    }
+  ]
+}

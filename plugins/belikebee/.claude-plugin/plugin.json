@@ -1,0 +1,8 @@
+{
+  "name": "belikebee",
+  "version": "0.1.0",
+  "description": "BeLikeBee feature workflow: plan, scaffold, test and ship skills, a pattern-scout subagent, and a hook that blocks module-boundary violations.",
+  "author": {
+    "name": "ivan lysakov"
+  }
+}
