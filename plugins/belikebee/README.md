@@ -1,6 +1,6 @@
 # belikebee
 
-Claude Code plugin for building features in the BeLikeBee repo, a Next.js modular monolith where each bounded context lives in `src/modules/<name>/` and modules talk only through their public `index.ts` or domain events. The plugin turns that repo's feature workflow into four skills, adds a subagent that finds existing code to reuse, and adds a hook that stops Claude from writing imports that break the module boundaries.
+Claude Code plugin for building features in the BeLikeBee repo, a Next.js modular monolith where each bounded context lives in `src/modules/<name>/` and modules talk only through their public `index.ts` or domain events. The plugin turns that repo's feature workflow into four skills, adds a release-notes command, a subagent that finds existing code to reuse, and adds a hook that stops Claude from writing imports that break the module boundaries.
 
 It is written for that repo's layout and tooling (`ARCHITECTURE.md`, `.claude/rules/<name>.md`, Prisma multi-file schema, Vitest, Playwright, Postgres in `docker compose`), so it is not meant for other projects.
 
@@ -23,6 +23,10 @@ A feature goes through four steps, one skill each. Every skill also triggers on 
 | 2. Build | `/belikebee:feature-scaffold` | Implements the agreed plan test-first inside the module: failing Vitest test, then the Zod schema, server action, Prisma models and migration, UI, and thin routes in `src/app`. Ends with typecheck, build and a deliberate-break check that proves the tests catch regressions. |
 | 3. Test | `/belikebee:feature-tests` | Lists what is already covered, lets you pick the missing levels (unit, DB integration on `belikebee_test`, Playwright E2E), writes them on the existing test setup, and proves each suite can fail. Never touches dev data. |
 | 4. Ship | `/belikebee:feature-ship` | Separates your changes from other sessions' files, reviews the diff, re-runs the checks, stages explicit paths, scans for secrets, commits on `dev`, and appends the `LOG.md` line. Pushing stays with you. |
+
+## Command: `/belikebee:release-notes [from-ref]`
+
+Runs the repo's `scripts/release-notes.sh`, which calls `claude -p` with `--json-schema`, `--max-turns 10` and only `git log`, `Read(docs/*)` and `Edit(docs/**)` allowed. Claude rewrites the `## [Unreleased]` section of `docs/CHANGELOG.md` from the commits since the last tag (or `from-ref`), and the script checks that every commit is covered by both the notes and the changelog. The result stays in the working tree for review; the command never commits.
 
 ## Subagent: `belikebee:pattern-scout`
 
