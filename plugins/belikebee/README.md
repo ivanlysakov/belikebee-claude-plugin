@@ -1,6 +1,6 @@
 # belikebee
 
-Claude Code plugin for building features in the BeLikeBee repo, a Next.js modular monolith where each bounded context lives in `src/modules/<name>/` and modules talk only through their public `index.ts` or domain events. The plugin turns that repo's feature workflow into four skills, adds a release-notes command, a subagent that finds existing code to reuse, and adds a hook that stops Claude from writing imports that break the module boundaries.
+Claude Code plugin for building features in the BeLikeBee repo, a Next.js modular monolith where each bounded context lives in `src/modules/<name>/` and modules talk only through their public `index.ts` or domain events. The plugin turns that repo's feature workflow into four skills, adds a release-notes command, a subagent that finds existing code to reuse, and adds hooks that stop Claude from writing imports that break the module boundaries and from committing modules whose tests fail.
 
 It is written for that repo's layout and tooling (`ARCHITECTURE.md`, `.claude/rules/<name>.md`, Prisma multi-file schema, Vitest, Playwright, Postgres in `docker compose`), so it is not meant for other projects.
 
@@ -43,7 +43,11 @@ Runs before every Edit, Write and MultiEdit on `.ts`, `.tsx`, `.js`, `.jsx` and 
 
 A blocked call returns the rule it broke, so Claude can fix the import. The check matches import text with a regular expression, so imports built from template strings are not caught; lint rules are the complete solution once the repo has them.
 
+## Hook: tests before commit
+
+Runs before every Bash call and acts only when the command runs `git commit` (also `git -C <dir> commit`, or after `cd <dir>`). It looks at staged, unstaged and untracked changes: for each module changed under `src/modules/<name>/` it runs that module's Vitest unit tests, then its integration tests against `belikebee_test`. Changes in `src/shared`, `test/` or tooling config (`package.json`, `vitest.config.ts`, …) run every module's tests. A failing test, or Postgres being down when integration tests are needed, blocks the commit with the failing output. Commits that touch no module run nothing.
+
 ## Requirements
 
-- `bash` (3.2 or newer, so the macOS default works) and `jq` for the hook.
-- The BeLikeBee repo with Postgres running (`docker compose up -d postgres`) for integration and E2E tests.
+- `bash` (3.2 or newer, so the macOS default works) and `jq` for the hooks; `pnpm` for the commit hook.
+- The BeLikeBee repo with Postgres running (`docker compose up -d postgres`) for integration and E2E tests, and for commits that touch a module with integration tests.

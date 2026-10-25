@@ -1,5 +1,5 @@
 {
-  "description": "Blocks imports that break the module boundaries in ARCHITECTURE.md.",
+  "description": "Blocks imports that break the module boundaries in ARCHITECTURE.md, and commits whose changed modules fail their tests.",
   "hooks": {
     "PreToolUse": [
       {
@@ -8,6 +8,16 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/check-module-boundaries.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/test-changed-modules.sh\"",
+            "timeout": 300
           }
         ]
       }

@@ -4,7 +4,7 @@ Claude Code marketplace with one plugin, `belikebee`, for the [BeLikeBee](https:
 
 ## Purpose
 
-BeLikeBee is one Next.js app split into modules (identity, apiary, billing, scheduling, notifications) that may only talk through each other's `index.ts` or domain events. Without the plugin, every feature needed the same long prompt (read the ADR and module rules, write a failing test first, prove the tests can fail, commit only your own files, append the `LOG.md` line), and Claude could still write deep cross-module imports that break the boundaries. The plugin packs that workflow into skills, blocks boundary-breaking imports before they are written, and drafts release notes from git history.
+BeLikeBee is one Next.js app split into modules (identity, apiary, billing, scheduling, notifications) that may only talk through each other's `index.ts` or domain events. Without the plugin, every feature needed the same long prompt (read the ADR and module rules, write a failing test first, prove the tests can fail, commit only your own files, append the `LOG.md` line), and Claude could still write deep cross-module imports that break the boundaries. The plugin packs that workflow into skills, blocks boundary-breaking imports before they are written and commits whose modules fail their tests, and drafts release notes from git history.
 
 ## Install
 
@@ -45,5 +45,6 @@ Agent: `belikebee:pattern-scout` (Sonnet, read-only) finds the existing code and
 | Event | Matcher | Condition | Effect |
 | --- | --- | --- | --- |
 | `PreToolUse` | `Edit\|Write\|MultiEdit` | Target is a `.ts`, `.tsx`, `.js`, `.jsx` or `.mjs` file under `src/` (not `node_modules`); only the text being written is checked. | Exit 2 blocks the call and tells Claude which rule broke: a deep import into another module (`@/modules/billing/db/queries` or `../billing/...`), `src/shared` importing `src/modules` or `src/app`, a module importing `src/app`, or `identity` importing any other module. |
+| `PreToolUse` | `Bash` | The command runs `git commit` (also `git -C <dir> commit` or after `cd`) and the working tree has changes under `src/modules/<name>/`, or in `src/shared`, `test/` or tooling config (then all modules). | Runs the Vitest unit tests of the changed modules, then their integration tests against `belikebee_test`. Exit 2 blocks the commit when a test fails or Postgres is down, with the failing test output. |
 
-Needs `bash` (3.2+, the macOS default works) and `jq`. Imports built from template strings are not caught; lint rules are the full solution once the repo has them.
+Needs `bash` (3.2+, the macOS default works) and `jq`; the commit hook also needs `pnpm` and Postgres (`docker compose up -d postgres`) when the changed modules have integration tests. Imports built from template strings are not caught; lint rules are the full solution once the repo has them.

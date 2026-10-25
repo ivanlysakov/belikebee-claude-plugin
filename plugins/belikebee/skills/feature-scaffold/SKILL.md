@@ -1,6 +1,6 @@
 ---
 name: feature-scaffold
-description: Implement an agreed BeLikeBee feature test-first inside its module — failing Vitest test first, then the minimum code in src/modules/<name>/ (Zod schema, server action, Prisma models + migration, UI pieces) and thin routes in src/app, finishing with typecheck, build, and a deliberate-break check that proves the tests catch regressions. Use this whenever the user says implement / build / scaffold / create / "add X to module Y" after a plan exists or the scope is already clear, or invokes /belikebee:feature-scaffold — even for "small" changes to a module. If there is no plan and real decisions are open, run /belikebee:feature-plan first.
+description: Implement an agreed BeLikeBee feature test-first inside its module — failing Vitest test first, then the minimum code in src/modules/<name>/ (Zod schema, server action, Prisma models + migration, UI pieces) and thin routes in src/app, finishing with typecheck, build, and a deliberate-break check that proves the tests catch regressions. Use this whenever the user says implement / build / scaffold / create / "add X to module Y" after a plan exists or the scope is already clear, or invokes /belikebee:feature-scaffold — even for "small" changes to a module. Also use it for "go", "go next", "next slice" while working through the slices of a /belikebee:feature-plan plan. If there is no plan and real decisions are open, run /belikebee:feature-plan first.
 ---
 
 # Feature scaffold
@@ -86,7 +86,8 @@ Pick mutations the test is *designed* to catch (e.g. allow ADMIN at sign-up, sto
 ## 6. Verify
 
 - `pnpm test` (unit), `pnpm typecheck`, and `pnpm build` when routes/UI changed. `next build`/`next dev` load `.env`, so run them outside the sandbox.
-- For UI flows, start the dev server in the background (outside the sandbox), check routes with curl, and offer the user a short manual test script or `/belikebee:feature-tests` for E2E.
+- **Dev smoke check**, required when routes, pages, server components, messages or i18n changed: start `pnpm dev` in the background (outside the sandbox), curl every new or changed route signed out (a protected route should redirect, not answer 500), and read the dev server output for `⨯` or `Error`. A 500 or an error in that output means not done, even with green tests and build: `next dev` compiles routes in a different order than `next build` (see `references/environment.md`). Stop the server afterwards.
+- For UI flows, offer the user a short manual test script, or `/belikebee:feature-tests` for E2E.
 - `grep` the new files' imports to confirm no boundary violations.
 
 ## 7. Report
