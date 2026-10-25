@@ -1,6 +1,6 @@
 # belikebee
 
-Claude Code plugin for building features in the BeLikeBee repo, a Next.js modular monolith where each bounded context lives in `src/modules/<name>/` and modules talk only through their public `index.ts` or domain events. The plugin turns that repo's feature workflow into four skills, adds a release-notes command, a subagent that finds existing code to reuse, and adds hooks that stop Claude from writing imports that break the module boundaries and from committing modules whose tests fail.
+Claude Code plugin for building features in the BeLikeBee repo, a Next.js modular monolith where each bounded context lives in `src/modules/<name>/` and modules talk only through their public `index.ts` or domain events. The plugin turns that repo's feature workflow into four skills, adds release-notes and design-system commands, a subagent that finds existing code to reuse, and adds hooks that stop Claude from writing imports that break the module boundaries, from writing raw colors and text sizes into markup, and from committing modules whose tests fail.
 
 It is written for that repo's layout and tooling (`ARCHITECTURE.md`, `.claude/rules/<name>.md`, Prisma multi-file schema, Vitest, Playwright, Postgres in `docker compose`), so it is not meant for other projects.
 
@@ -28,6 +28,10 @@ A feature goes through four steps, one skill each. Every skill also triggers on 
 
 Runs the repo's `scripts/release-notes.sh`, which calls `claude -p` with `--json-schema`, `--max-turns 10` and only `git log`, `Read(docs/*)` and `Edit(docs/**)` allowed. Claude rewrites the `## [Unreleased]` section of `docs/CHANGELOG.md` from the commits since the last tag (or `from-ref`), and the script checks that every commit is covered by both the notes and the changelog. The result stays in the working tree for review; the command never commits.
 
+## Command: `/belikebee:design-system`
+
+Rebuilds `docs/design/design-system.md` from the code: the palette in `src/app/globals.css` (raw values), the roles that point at it and the utilities they back, theme overrides such as `.theme-apiary`, the `type-*` text roles, fonts, and the variants of `src/shared/ui/` primitives. It ends with a Drift section: roles holding raw values, unused palette entries, and raw colors or text sizes in `.tsx` with `file:line`. The code stays the source of truth; the command never proposes tokens, fixes drift or commits.
+
 ## Subagent: `belikebee:pattern-scout`
 
 A read-only search, run at the start of planning. Give it the feature in a sentence or two and the target module, and it returns a short report with `file:line` references: what to reuse as is, which existing file to copy for each new piece (schema, action, model, form, route, each test level), the module boundaries and events involved, what has no precedent yet, and where the code is inconsistent. It runs on Sonnet and uses Bash only for read-only commands.
@@ -42,6 +46,16 @@ Runs before every Edit, Write and MultiEdit on `.ts`, `.tsx`, `.js`, `.jsx` and 
 - `identity` importing any other module (its rules allow none).
 
 A blocked call returns the rule it broke, so Claude can fix the import. The check matches import text with a regular expression, so imports built from template strings are not caught; lint rules are the complete solution once the repo has them.
+
+## Hook: design tokens
+
+Runs before every Edit, Write and MultiEdit on `.tsx` and `.jsx` files under `src/`, and checks only the text being written. It blocks raw design values in markup:
+
+- hex colors (`#F5E6C8`, also inside `bg-[#...]`) and color functions (`oklch(`, `rgb(`, `hsl(`, `color-mix(`);
+- Tailwind palette classes that bypass the roles (`text-amber-700`, `bg-white`, `hover:border-neutral-200`);
+- arbitrary colors (`-[var(--...)]`, `-[oklch(...)]`) and arbitrary text sizes (`text-[13px]`).
+
+The message tells Claude to use a role utility, or to add the value to the palette in `globals.css` and point a role at it. Arbitrary values that are not colors (`ring-[3px]`, `data-[loaded=true]:`) pass. An anchor such as `href="#added"` is read as a hex color; rename the anchor.
 
 ## Hook: tests before commit
 

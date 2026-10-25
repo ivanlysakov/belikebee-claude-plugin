@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "belikebee",
-      "description": "BeLikeBee feature workflow: plan, scaffold, test and ship skills, a release-notes command, a pattern-scout subagent, and hooks that block module-boundary violations and commits whose modules fail their tests.",
-      "version": "0.3.0",
+      "description": "BeLikeBee feature workflow: plan, scaffold, test and ship skills, release-notes and design-system commands, a pattern-scout subagent, and hooks that block module-boundary violations, raw colors and text sizes in markup, and commits whose modules fail their tests.",
+      "version": "0.4.0",
       "source": "./plugins/belikebee"
     }
   ]
